@@ -77,7 +77,7 @@ app.get("/", (req, res) => {
   const options = {
     root: path.join(__dirname),
   };
-  const fileName = "data.js";
+  const fileName = "data.json";
   res.sendFile(fileName, options, function (err) {
     if (err) {
       next(err);
