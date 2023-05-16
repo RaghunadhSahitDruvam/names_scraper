@@ -88,6 +88,19 @@ app.get("/", (req, res) => {
     }
   });
 });
+app.get("/girlsData", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "girlsData.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
 const PORT = 3000 || process.env.PORT;
 app.listen(PORT, () => {
   console.log("App is Running...");
