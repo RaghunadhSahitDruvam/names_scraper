@@ -17,9 +17,9 @@
 //   });
 //   const page = await browser.newPage();
 //   await page.goto(
-//     "https://6461e8ab69629c27b775ce69--regal-nougat-3fc490.netlify.app/"
+//     "https://64648dd0e8d13f0502b578ec--melodious-starburst-6e5312.netlify.app/"
 //   );
-//   for (let i = 1; i < 4778; i++) {
+//   for (let i = 1; i < 2773; i++) {
 //     // #root > div > tr:nth-child(200)
 //     await page.waitForSelector(`#root > div > tr:nth-child(${i})`);
 //     // await page.setDefaultNavigationTimeout(0);
@@ -93,6 +93,20 @@ app.get("/girlsData", (req, res) => {
     root: path.join(__dirname),
   };
   const fileName = "girlsData.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+
+app.get("/girls8Data", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "letter8Girls.json";
   res.sendFile(fileName, options, function (err) {
     if (err) {
       next(err);
