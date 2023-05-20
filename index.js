@@ -17,9 +17,10 @@
 //   });
 //   const page = await browser.newPage();
 //   await page.goto(
-//     "https://64648dd0e8d13f0502b578ec--melodious-starburst-6e5312.netlify.app/"
+//     "https://6468965ed4f25f0248a83ae6--stunning-narwhal-03d1fb.netlify.app/"
 //   );
-//   for (let i = 1; i < 2773; i++) {
+//   //28320
+//   for (let i = 19600; i < 28320; i++) {
 //     // #root > div > tr:nth-child(200)
 //     await page.waitForSelector(`#root > div > tr:nth-child(${i})`);
 //     // await page.setDefaultNavigationTimeout(0);
@@ -34,6 +35,9 @@
 //     value = value.split("-", 1)[0];
 
 //     value = value
+//       .replaceAll("SharÃ»", "sharda")
+//       .replaceAll("SinadÃ©vi", "Saindhavi")
+//       .replaceAll("DakshayajÃ±avinaashin", "Dakshayajvinaashin")
 //       .replaceAll("-", "")
 //       .replaceAll(".", " ")
 //       .replaceAll("{", "")
@@ -120,6 +124,58 @@ app.get("/naamhinaamGirls", (req, res) => {
     root: path.join(__dirname),
   };
   const fileName = "naamHiNaamGirls.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/namesLookGirlNames", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "namesLookGirlNames.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/babyGirlNamesEasy1", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "babyGirlNamesEasy1.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/babyGirlNamesEasy2", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "babyGirlNamesEasy2.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/babyGirlNamesEasy3", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "babyGirlNamesEasy3.json";
   res.sendFile(fileName, options, function (err) {
     if (err) {
       next(err);
