@@ -81,6 +81,7 @@
 // app.listen(5173, () => {
 //   console.log("Yes iam running on port 5173");
 // });
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -223,6 +224,20 @@ app.get("/babyBoyNamesEasy3", (req, res) => {
     root: path.join(__dirname),
   };
   const fileName = "babyBoyNamesEasy3.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+
+app.get("/babyBoyNamesEasy4", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "babyBoyNamesEasy4.json";
   res.sendFile(fileName, options, function (err) {
     if (err) {
       next(err);
