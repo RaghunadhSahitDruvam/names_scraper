@@ -175,6 +175,45 @@ app.get("/sixor7girlNames", (req, res) => {
     }
   });
 });
+app.get("/bulkBoyData", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "bulkBoyData.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/only5letterBoynames", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "only5letterBoynames.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/only6letterBoynames", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "only6letterBoynames.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
 const PORT = 3000 || process.env.PORT;
 app.listen(PORT, () => {
   console.log("App is Running...");
