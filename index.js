@@ -214,6 +214,19 @@ app.get("/only6letterBoynames", (req, res) => {
     }
   });
 });
+app.get("/easybabynames", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "easybabynames.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
 const PORT = 3000 || process.env.PORT;
 app.listen(PORT, () => {
   console.log("App is Running...");
