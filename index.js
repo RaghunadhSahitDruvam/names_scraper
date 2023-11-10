@@ -227,6 +227,32 @@ app.get("/easybabynames", (req, res) => {
     }
   });
 });
+app.get("/nameslook", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "nameslook.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
+app.get("/angelsname", (req, res) => {
+  const options = {
+    root: path.join(__dirname),
+  };
+  const fileName = "angelsname.json";
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      console.log("Sent:", fileName);
+    }
+  });
+});
 const PORT = 3000 || process.env.PORT;
 app.listen(PORT, () => {
   console.log("App is Running...");
