@@ -6,16 +6,53 @@ const path = require("path");
 const app = express();
 
 app.use(cors());
+app.disable("etag");
 
-const DATA_DIRECTORY = __dirname;
-const DATA_FILES = fs
-  .readdirSync(DATA_DIRECTORY)
-  .filter(
-    (fileName) =>
-      fileName.endsWith(".json") &&
-      fileName !== "package.json" &&
-      fileName !== "package-lock.json",
-  );
+const EXCLUDED_JSON_FILES = new Set([
+  "package.json",
+  "package-lock.json",
+  "vercel.json",
+]);
+
+function getJsonDataFiles(directoryPath) {
+  if (!directoryPath || !fs.existsSync(directoryPath)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(directoryPath)
+    .filter(
+      (fileName) =>
+        fileName.endsWith(".json") && !EXCLUDED_JSON_FILES.has(fileName),
+    );
+}
+
+function resolveDataSource() {
+  const candidateDirectories = [
+    process.cwd(),
+    __dirname,
+    path.join(process.cwd(), "api"),
+    path.join(__dirname, "api"),
+  ];
+
+  for (const directoryPath of candidateDirectories) {
+    const files = getJsonDataFiles(directoryPath);
+
+    if (files.length > 0) {
+      return {
+        directoryPath,
+        files,
+      };
+    }
+  }
+
+  return {
+    directoryPath: process.cwd(),
+    files: [],
+  };
+}
+
+let { directoryPath: DATA_DIRECTORY, files: DATA_FILES } = resolveDataSource();
 
 const FILE_ROUTES = {
   "/girlsData": "girlsData.json",
@@ -79,7 +116,28 @@ function loadAllRecords() {
 }
 
 function refreshCache() {
+  const dataSource = resolveDataSource();
+
+  DATA_DIRECTORY = dataSource.directoryPath;
+  DATA_FILES = dataSource.files;
   cachedRecords = loadAllRecords();
+}
+
+function ensureCacheLoaded() {
+  if (cachedRecords.length > 0) {
+    return;
+  }
+
+  refreshCache();
+}
+
+function setNoCacheHeaders(res) {
+  res.set({
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+    "Surrogate-Control": "no-store",
+  });
 }
 
 function createHomePage() {
@@ -417,7 +475,9 @@ function createHomePage() {
         statusText.textContent = "Searching all datasets...";
 
         try {
-          const response = await fetch('/search?' + params.toString());
+          const response = await fetch('/search?' + params.toString(), {
+            cache: 'no-store'
+          });
 
           if (!response.ok) {
             throw new Error("Search request failed.");
@@ -459,10 +519,14 @@ function sendJsonFile(fileName) {
 refreshCache();
 
 app.get("/", (req, res) => {
+  setNoCacheHeaders(res);
   res.type("html").send(createHomePage());
 });
 
 app.get("/search", (req, res) => {
+  setNoCacheHeaders(res);
+  ensureCacheLoaded();
+
   const rawG2 = req.query.g2tot;
   const rawG3 = req.query.g3tot;
   const rawLetters = req.query.tot_letters;
@@ -487,6 +551,13 @@ app.get("/search", (req, res) => {
 
   if (hasInvalidFilter) {
     res.status(400).json({ error: "All filters must be valid numbers." });
+    return;
+  }
+
+  if (DATA_FILES.length === 0) {
+    res
+      .status(500)
+      .json({ error: "No JSON data files were found on the server." });
     return;
   }
 
@@ -538,6 +609,10 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`App is running on http://localhost:${PORT}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`App is running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
