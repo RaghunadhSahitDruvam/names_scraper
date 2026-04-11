@@ -14,7 +14,7 @@ const DATA_FILES = fs
     (fileName) =>
       fileName.endsWith(".json") &&
       fileName !== "package.json" &&
-      fileName !== "package-lock.json"
+      fileName !== "package-lock.json",
   );
 
 const FILE_ROUTES = {
@@ -46,7 +46,7 @@ function extractName(blockValue) {
   }
 
   const matches = [...blockValue.matchAll(/<td>(.*?)<\/td>/gi)].map((match) =>
-    match[1].trim()
+    match[1].trim(),
   );
 
   if (matches.length === 0) {
@@ -473,9 +473,11 @@ app.get("/search", (req, res) => {
     tot_letters: rawLetters === undefined ? null : Number(rawLetters),
   };
 
-  const hasAtLeastOneFilter = Object.values(filters).some((value) => value !== null);
+  const hasAtLeastOneFilter = Object.values(filters).some(
+    (value) => value !== null,
+  );
   const hasInvalidFilter = Object.values(filters).some(
-    (value) => value !== null && Number.isNaN(value)
+    (value) => value !== null && Number.isNaN(value),
   );
 
   if (!hasAtLeastOneFilter) {
@@ -488,25 +490,30 @@ app.get("/search", (req, res) => {
     return;
   }
 
-  const names = [...new Set(
-    cachedRecords
-      .filter((item) => {
-        if (filters.g2tot !== null && item.g2tot !== filters.g2tot) {
-          return false;
-        }
+  const names = [
+    ...new Set(
+      cachedRecords
+        .filter((item) => {
+          if (filters.g2tot !== null && item.g2tot !== filters.g2tot) {
+            return false;
+          }
 
-        if (filters.g3tot !== null && item.g3tot !== filters.g3tot) {
-          return false;
-        }
+          if (filters.g3tot !== null && item.g3tot !== filters.g3tot) {
+            return false;
+          }
 
-        if (filters.tot_letters !== null && item.tot_letters !== filters.tot_letters) {
-          return false;
-        }
+          if (
+            filters.tot_letters !== null &&
+            item.tot_letters !== filters.tot_letters
+          ) {
+            return false;
+          }
 
-        return true;
-      })
-      .map((item) => item.name),
-  )];
+          return true;
+        })
+        .map((item) => item.name),
+    ),
+  ];
 
   res.json({
     count: names.length,
