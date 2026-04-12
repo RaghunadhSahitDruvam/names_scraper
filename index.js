@@ -54,7 +54,7 @@ function resolveDataSource() {
 
 let { directoryPath: DATA_DIRECTORY, files: DATA_FILES } = resolveDataSource();
 
-const FILE_ROUTES = {
+const FILE_ROUTE_ALIASES = {
   "/girlsData": "girlsData.json",
   "/girls8Data": "letter8Girls.json",
   "/naamhinaamGirls": "naamHiNaamGirls.json",
@@ -73,7 +73,24 @@ const FILE_ROUTES = {
   "/easybabynames": "easybabynames.json",
   "/nameslook": "nameslook.json",
   "/angelsname": "angelsname.json",
+  "/new_data": "new_data.json",
 };
+
+function buildFileRoutes(fileNames) {
+  const discoveredRoutes = Object.fromEntries(
+    fileNames.map((fileName) => [
+      `/${path.basename(fileName, ".json")}`,
+      fileName,
+    ]),
+  );
+
+  return {
+    ...discoveredRoutes,
+    ...FILE_ROUTE_ALIASES,
+  };
+}
+
+let FILE_ROUTES = buildFileRoutes(DATA_FILES);
 
 let cachedRecords = [];
 
@@ -106,7 +123,10 @@ function loadAllRecords() {
     return parsedContent
       .map((item) => ({
         fileName,
-        name: extractName(item.name_g1_block),
+        name:
+          typeof item.name === "string" && item.name.trim()
+            ? item.name.trim()
+            : extractName(item.name_g1_block),
         g2tot: Number(item.g2tot),
         g3tot: Number(item.g3tot),
         tot_letters: Number(item.tot_letters),
@@ -120,6 +140,7 @@ function refreshCache() {
 
   DATA_DIRECTORY = dataSource.directoryPath;
   DATA_FILES = dataSource.files;
+  FILE_ROUTES = buildFileRoutes(DATA_FILES);
   cachedRecords = loadAllRecords();
 }
 
