@@ -57,6 +57,10 @@ let { directoryPath: DATA_DIRECTORY, files: DATA_FILES } = resolveDataSource();
 const FILE_ROUTE_ALIASES = {
   "/girlsData": "girlsData.json",
   "/girls8Data": "letter8Girls.json",
+  "/indian_child_names": "indian_child_names.json",
+  "/indianChildNames": "indian_child_names.json",
+  "/dotiamnames": "dotiamnames.json",
+  "/dotIamNames": "dotiamnames.json",
   "/naamhinaamGirls": "naamHiNaamGirls.json",
   "/namesLookGirlNames": "namesLookGirlNames.json",
   "/babyGirlNamesEasy1": "babyGirlNamesEasy1.json",
@@ -94,13 +98,39 @@ let FILE_ROUTES = buildFileRoutes(DATA_FILES);
 
 let cachedRecords = [];
 
+function normalizeName(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
 function extractName(blockValue) {
   if (typeof blockValue !== "string") {
     return "";
   }
 
+  const rows = [...blockValue.matchAll(/<tr>(.*?)<\/tr>/gi)].map(
+    (match) => match[1],
+  );
+
+  if (rows.length > 0) {
+    const lastRowCells = [...rows[rows.length - 1].matchAll(/<td>(.*?)<\/td>/gi)]
+      .map((match) =>
+        match[1]
+          .replace(/&nbsp;/gi, " ")
+          .replace(/<[^>]+>/g, "")
+          .trim(),
+      )
+      .filter(Boolean);
+
+    if (lastRowCells.length > 0) {
+      return lastRowCells.join(" ");
+    }
+  }
+
   const matches = [...blockValue.matchAll(/<td>(.*?)<\/td>/gi)].map((match) =>
-    match[1].trim(),
+    match[1]
+      .replace(/&nbsp;/gi, " ")
+      .replace(/<[^>]+>/g, "")
+      .trim(),
   );
 
   if (matches.length === 0) {
@@ -127,11 +157,45 @@ function loadAllRecords() {
           typeof item.name === "string" && item.name.trim()
             ? item.name.trim()
             : extractName(item.name_g1_block),
+        name_g1_block:
+          typeof item.name_g1_block === "string" ? item.name_g1_block : "",
+        name_g2_block:
+          typeof item.name_g2_block === "string" ? item.name_g2_block : "",
+        name_g3_block:
+          typeof item.name_g3_block === "string" ? item.name_g3_block : "",
+        g1tot: Number(item.g1tot),
         g2tot: Number(item.g2tot),
         g3tot: Number(item.g3tot),
+        g1vtot: Number(item.g1vtot),
+        g2vtot: Number(item.g2vtot),
+        g3vtot: Number(item.g3vtot),
+        g1nettot: Number(item.g1nettot),
+        g2nettot: Number(item.g2nettot),
+        g3nettot: Number(item.g3nettot),
         tot_letters: Number(item.tot_letters),
+        dob_tot: Number(item.dob_tot),
       }))
       .filter((item) => item.name);
+  });
+}
+
+function removeDuplicateRecords(records) {
+  const seen = new Set();
+
+  return records.filter((record) => {
+    const key = [
+      normalizeName(record.name),
+      Number.isFinite(record.g2tot) ? record.g2tot : "",
+      Number.isFinite(record.g3tot) ? record.g3tot : "",
+      Number.isFinite(record.tot_letters) ? record.tot_letters : "",
+    ].join("|");
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
   });
 }
 
@@ -141,7 +205,7 @@ function refreshCache() {
   DATA_DIRECTORY = dataSource.directoryPath;
   DATA_FILES = dataSource.files;
   FILE_ROUTES = buildFileRoutes(DATA_FILES);
-  cachedRecords = loadAllRecords();
+  cachedRecords = removeDuplicateRecords(loadAllRecords());
 }
 
 function ensureCacheLoaded() {
@@ -350,6 +414,68 @@ function createHomePage() {
         color: var(--text);
       }
 
+      .records {
+        display: grid;
+        gap: 18px;
+      }
+
+      .record-card {
+        overflow-x: auto;
+      }
+
+      .record-name {
+        margin: 0 0 10px;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.04em;
+      }
+
+      .matrix {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        border: 4px solid #ca8a04;
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .matrix th,
+      .matrix td {
+        border: 4px solid #ca8a04;
+        padding: 10px 12px;
+        vertical-align: top;
+      }
+
+      .matrix thead th,
+      .metric-label {
+        background: #16a34a;
+        color: #fff;
+        font-weight: 700;
+      }
+
+      .matrix tbody {
+        color: #6d184b;
+        font-weight: 700;
+      }
+
+      .block-cell table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .block-cell td {
+        padding: 6px 8px;
+        border: 0;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .totals-line {
+        color: #16a34a;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
@@ -443,7 +569,7 @@ function createHomePage() {
       const statusText = document.getElementById("status");
 
       function escapeHtml(value) {
-        return value
+        return String(value)
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
@@ -451,26 +577,47 @@ function createHomePage() {
           .replace(/'/g, "&#39;");
       }
 
-      function renderResults(names) {
-        if (!names.length) {
+      function renderResults(records) {
+        if (!records.length) {
           resultsContent.className = "empty";
-          resultsContent.textContent = "No matching names were found for the values you entered.";
+          resultsContent.textContent = "No results found for the filters you entered.";
           return;
         }
 
-        resultsContent.className = "";
-        resultsContent.innerHTML = [
-          '<table>',
-          '  <thead>',
-          '    <tr>',
-          '      <th>Name</th>',
-          '    </tr>',
-          '  </thead>',
-          '  <tbody>',
-          names.map((name) => '<tr><td class="name-cell">' + escapeHtml(name) + '</td></tr>').join(''),
-          '  </tbody>',
-          '</table>'
-        ].join('');
+        resultsContent.className = "records";
+        resultsContent.innerHTML = records.map((record) => [
+          '<article class="record-card">',
+          '  <h3 class="record-name">' + escapeHtml(record.name || 'Unnamed') + '</h3>',
+          '  <table class="matrix">',
+          '    <thead>',
+          '      <tr>',
+          '        <th>Grp.</th>',
+          '        <th>Name Block</th>',
+          '        <th>Total</th>',
+          '        <th>V</th>',
+          '        <th>C</th>',
+          '      </tr>',
+          '    </thead>',
+          '    <tbody>',
+          '      <tr>',
+          '        <td class="metric-label">C</td>',
+          '        <td class="block-cell"><table>' + (record.name_g2_block || '') + '</table></td>',
+          '        <td class="metric-label">' + escapeHtml(Number.isFinite(record.g2tot) ? record.g2tot : 0) + '</td>',
+          '        <td class="metric-label">' + escapeHtml(Number.isFinite(record.g2vtot) ? record.g2vtot : 0) + '</td>',
+          '        <td class="metric-label">' + escapeHtml(Number.isFinite(record.g2nettot) ? record.g2nettot : 0) + '</td>',
+          '      </tr>',
+          '      <tr>',
+          '        <td class="metric-label">P</td>',
+          '        <td class="block-cell"><table>' + (record.name_g3_block || '') + '</table></td>',
+          '        <td class="metric-label">' + escapeHtml(Number.isFinite(record.g3tot) ? record.g3tot : 0) + '</td>',
+          '        <td class="metric-label">' + escapeHtml(Number.isFinite(record.g3vtot) ? record.g3vtot : 0) + '</td>',
+          '        <td class="metric-label">' + escapeHtml(Number.isFinite(record.g3nettot) ? record.g3nettot : 0) + '</td>',
+          '      </tr>',
+          '    </tbody>',
+          '  </table>',
+          '  <div class="totals-line">Total Letters - ' + escapeHtml(Number.isFinite(record.tot_letters) ? record.tot_letters : 0) + '</div>',
+          '</article>'
+        ].join('')).join('');
       }
 
       form.addEventListener("submit", async (event) => {
@@ -506,7 +653,7 @@ function createHomePage() {
 
           const payload = await response.json();
           statusText.textContent = payload.count + ' matching name' + (payload.count === 1 ? '' : 's') + ' found.';
-          renderResults(payload.names);
+          renderResults(payload.records || []);
         } catch (error) {
           statusText.textContent = "Search failed.";
           resultsContent.className = "empty";
@@ -582,34 +729,28 @@ app.get("/search", (req, res) => {
     return;
   }
 
-  const names = [
-    ...new Set(
-      cachedRecords
-        .filter((item) => {
-          if (filters.g2tot !== null && item.g2tot !== filters.g2tot) {
-            return false;
-          }
+  const records = removeDuplicateRecords(cachedRecords.filter((item) => {
+    if (filters.g2tot !== null && item.g2tot !== filters.g2tot) {
+      return false;
+    }
 
-          if (filters.g3tot !== null && item.g3tot !== filters.g3tot) {
-            return false;
-          }
+    if (filters.g3tot !== null && item.g3tot !== filters.g3tot) {
+      return false;
+    }
 
-          if (
-            filters.tot_letters !== null &&
-            item.tot_letters !== filters.tot_letters
-          ) {
-            return false;
-          }
+    if (
+      filters.tot_letters !== null &&
+      item.tot_letters !== filters.tot_letters
+    ) {
+      return false;
+    }
 
-          return true;
-        })
-        .map((item) => item.name),
-    ),
-  ];
+    return true;
+  }));
 
   res.json({
-    count: names.length,
-    names,
+    count: records.length,
+    records,
   });
 });
 
